@@ -1,9 +1,7 @@
 import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist';
 
-// Use a static worker from the public directory (Next.js-friendly)
 GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js';
 
-// Simple PDF text extraction without external dependencies
 export const extractTextFromPdf = async (file) => {
   try {
     const arrayBuffer = await file.arrayBuffer();
@@ -16,8 +14,8 @@ export const extractTextFromPdf = async (file) => {
       fullText += pageText + '\n';
     }
     const cleanedText = fullText
-      .replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ') // Remove control chars
-      .replace(/\s+/g, ' ') // Normalize whitespace
+      .replace(/[\u0000-\u001F\u007F-\u009F]/g, ' ') 
+      .replace(/\s+/g, ' ') 
       .trim();
     if (cleanedText.length < 50) {
       throw new Error('Could not extract meaningful text from PDF. The file might be image-based or corrupted.');

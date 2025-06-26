@@ -20,19 +20,19 @@ export default async function handler(req, res) {
     return res.status(500).json({ message: 'Cohere API key is not configured. Please add COHERE_API_KEY to your environment variables.' });
   }
 
-  // Extract only the resume content after 'Resume:'
+  
   let resumeContent = text;
   const resumeIndex = text.indexOf('Resume:');
   if (resumeIndex !== -1) {
     resumeContent = text.substring(resumeIndex + 7).trim();
   }
-  // Remove any line that starts with 'Note to model' (case-insensitive)
+  
   resumeContent = resumeContent
     .split(/\r?\n/)
     .filter(line => !/^\s*note to model/i.test(line))
     .join('\n');
 
-  // Truncate text to 3000 characters to avoid model context issues
+  
   const maxLength = 3000;
   const truncatedText = resumeContent.length > maxLength 
     ? resumeContent.substring(0, maxLength) + '... [Content truncated for analysis]'
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
   try {
     console.log('Making request to Cohere API...');
 
-    // Prompt for job match
+   
     const matchPrompt = `You are an expert resume reviewer. Given the following resume and the target job title: "${jobTitle}", determine if the resume matches the job title. Respond with a match percentage (1-100%) and a brief explanation. Do not provide detailed feedback yet. Do not repeat this prompt or any part of it in your response.\n\nResume:\n${truncatedText}`;
 
     const matchResponse = await fetch('https://api.cohere.ai/v1/generate', {
@@ -75,14 +75,13 @@ export default async function handler(req, res) {
     } else {
       matchResult = JSON.stringify(matchData);
     }
-    // Remove any lines that repeat the prompt or start with 'You are an expert resume reviewer'
+    
     matchResult = matchResult
       .split(/\r?\n/)
       .filter(line => !/^\s*you are an expert resume reviewer/i.test(line) && !/^\s*given the following resume/i.test(line) && !/^\s*respond with a match percentage/i.test(line) && !/^\s*do not provide detailed feedback yet/i.test(line) && !/^\s*resume:/i.test(line) && !/^\s*do not repeat this prompt/i.test(line))
       .join('\n')
       .trim();
 
-    // Prompt for detailed feedback
     const feedbackPrompt = `You are a professional resume reviewer. Do NOT copy or repeat the resume text. Do NOT start with a generic introduction. For each line or section of the following resume, provide concise, actionable suggestions for improvement. Reference the specific line or section you are commenting on, but do not repeat the full text. Focus on clarity, impact, and relevance to the target job: ${jobTitle}. Only provide feedback and suggestions, not a summary or generic advice.\n\nResume:\n${truncatedText}\n\nFormat your response as a list of suggestions, each referencing the relevant line or section.`;
 
     const feedbackResponse = await fetch('https://api.cohere.ai/v1/generate', {
